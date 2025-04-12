@@ -1,34 +1,36 @@
-# app.py
 from flask import Flask, render_template, request
+import os
 
 app = Flask(__name__)
 
-# مفتاح التشفير (تبديل الحروف الأبجدية)
-key = {
-    'a': 'Q', 'b': 'W', 'c': 'E', 'd': 'R', 'e': 'T',
-    'f': 'Y', 'g': 'U', 'h': 'I', 'i': 'O', 'j': 'P',
-    'k': 'A', 'l': 'S', 'm': 'D', 'n': 'F', 'o': 'G',
-    'p': 'H', 'q': 'J', 'r': 'K', 's': 'L', 't': 'Z',
-    'u': 'X', 'v': 'C', 'w': 'V', 'x': 'B', 'y': 'N',
-    'z': 'M'
-}
-
-def monoalphabetic_encrypt(text):
-    encrypted = ''
-    for char in text.lower():
-        if char in key:
-            encrypted += key[char]
+def caesar_encrypt(text, shift):
+    result = ""
+    for char in text:
+        if char.isalpha():
+            offset = 65 if char.isupper() else 97
+            shifted = chr((ord(char) - offset + shift) % 26 + offset)
+            result += shifted
         else:
-            encrypted += char
-    return encrypted
+            result += char
+    return result
 
 @app.route('/', methods=['GET', 'POST'])
-def home():
-    result = ''
+def index():
+    encrypted_text = ""
+    plaintext = ""
+    shift = 3  # default shift
+
     if request.method == 'POST':
-        plaintext = request.form['text']
-        result = monoalphabetic_encrypt(plaintext)
-    return render_template('index.html', result=result)
+        plaintext = request.form.get('plaintext', '')
+        shift_value = request.form.get('shift', '3')
+        try:
+            shift = int(shift_value)
+            encrypted_text = caesar_encrypt(plaintext, shift)
+        except:
+            encrypted_text = "Invalid shift value"
+
+    return render_template('index.html', encrypted=encrypted_text, plaintext=plaintext, shift=shift)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host='0.0.0.0', port=port)
